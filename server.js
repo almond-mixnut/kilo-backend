@@ -2,6 +2,7 @@ require('dotenv').config();
 const fs = require('fs');
 const https = require('https');
 const express = require('express');
+const multer = require('multer');
 const bodyParser = require('body-parser');
 const { Telegraf } = require('telegraf');
 const path = require('path');
@@ -9,6 +10,19 @@ const path = require('path');
 const app = express();
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadPath = path.join(__dirname, '/uploads/');
+        if (!fs.existsSync(uploadPath)){
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'build')));
 
@@ -45,6 +59,14 @@ app.post('/telegram/webhook', (req, res) => {
   bot.handleUpdate(req.body, res).catch((err) => console.log(err));
 });
 
+app.post('/upload', upload.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded.' });
+    }
+    res.json({ message: 'File uploaded successfully!', filePath: req.file.path });
+});
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.post('/send-message', (req, res) => {
     const { username, message } = req.body;
     if (username in userIds) {
