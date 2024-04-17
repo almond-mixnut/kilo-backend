@@ -1,59 +1,44 @@
 require('dotenv').config();
+const fs = require('fs');
+const https = require('https');
 const express = require('express');
+const bodyParser = require('body-parser');
 const { Telegraf } = require('telegraf');
-const { BlobServiceClient } = require('@azure/storage-blob');
-const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+
 const app = express();
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-app.use(express.json());
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'build')));
 
-const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
+// HTTPS 서버 옵션
+const options = {
+  pfx: fs.readFileSync(path.join(__dirname, 'server.pfx')),
+};
 
-// Endpoint to handle file uploads
-app.post('/upload', async (req, res) => {
-    const buffer = Buffer.from(req.body.file, 'base64'); // Assuming file is uploaded as base64 string
-    const blobName = uuidv4();
-    const containerClient = blobServiceClient.getContainerClient('files');
-    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-
-    try {
-        await blockBlobClient.upload(buffer, buffer.length);
-        const downloadLink = `https://20.233.57.117/download/${blobName}`;
-        res.status(200).json({ message: 'File uploaded successfully!', downloadLink });
-    } catch (error) {
-        res.status(500).json({ message: 'Failed to upload file', error: error.message });
-    }
+// 모든 HTTP 요청을 index.html로 리다이렉트
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
-// Telegram bot message handler
-let userIds = {};  // key: username, value: chatId
+// Bot 기본 명령어 설정
+bot.start((ctx) => ctx.reply('Welcome to the Secure App! This is the start message.'));
+bot.help((ctx) => ctx.reply('You can use this bot to share files securely. Send /upload to start uploading your files.'));
 
-bot.start((ctx) => {
-  ctx.reply('Welcome! I am your file sharing bot.');
-  const username = ctx.from.username;
-  const chatId = ctx.chat.id;
-  // 사용자의 username과 chatId 매핑하여 저장
-  userIds[username] = chatId;
-  console.log(`Registered ${username} with ID ${chatId}`);
+// 추가 명령어
+bot.command('upload', (ctx) => ctx.reply('Please use the app to upload files. Here is the link: https://20.233.57.117'));
+bot.command('status', (ctx) => {
+    // 상태 확인 로직 (예시)
+    ctx.reply('All systems operational.');
 });
 
-// 특정 사용자에게 메시지 보내기 예시 함수
-function sendMessageToUser(username, message) {
-  const chatId = userIds[username];
-  if (chatId) {
-    bot.telegram.sendMessage(chatId, message);
-    console.log(`Message sent to ${username}: ${message}`);
-  } else {
-    console.log("User not found.");
-  }
-}
+// Bot을 webhook 모드로 설정
+bot.telegram.setWebhook('https://20.233.57.117/telegram/webhook');
 
-// 이벤트나 특정 조건 발생 시 메시지 보내기 (예: 파일 업로드 완료)
-function notifyUserFileReady(username) {
-  const message = "Your file is ready to download.";
-  sendMessageToUser(username, message);
-}
+app.post('/telegram/webhook', (req, res) => {
+  bot.handleUpdate(req.body, res).catch((err) => console.log(err));
+});
 
 app.post('/send-message', (req, res) => {
     const { username, message } = req.body;
@@ -72,9 +57,10 @@ app.post('/send-message', (req, res) => {
     }
   });
 
-  
-bot.launch();
 
-app.listen(3000, () => {
-    console.log('Server running on port 3000');
+// HTTPS 서버 실행
+https.createServer(options, app).listen(443, () => {
+  console.log('HTTPS server running on port 443');
 });
+
+bot.launch();
