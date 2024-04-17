@@ -23,11 +23,16 @@ app.get('*', (req, res) => {
 });
 
 // Bot 기본 명령어 설정
-bot.start((ctx) => ctx.reply('Welcome to the Secure App! This is the start message.'));
+bot.start((ctx) => {
+    ctx.reply('Welcome to the Secure App!', {
+      reply_markup: {
+        inline_keyboard: [[{ text: 'Open App', url: 'https://20.233.57.117' }]]
+      }
+    });
+  });
 bot.help((ctx) => ctx.reply('You can use this bot to share files securely. Send /upload to start uploading your files.'));
 
 // 추가 명령어
-bot.command('upload', (ctx) => ctx.reply('Please use the app to upload files. Here is the link: https://20.233.57.117'));
 bot.command('status', (ctx) => {
     // 상태 확인 로직 (예시)
     ctx.reply('All systems operational.');
