@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname, 'build')));
 
 // HTTPS 서버 옵션
 const options = {
-  pfx: fs.readFileSync(path.join(__dirname, 'server.pfx')),
+  pfx: fs.readFileSync(path.join(__dirname, 'test.pfx')),
 };
 
 // 모든 HTTP 요청을 index.html로 리다이렉트
