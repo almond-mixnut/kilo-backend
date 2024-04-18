@@ -56,7 +56,6 @@ const inlineKeyboard = Markup.inlineKeyboard([
 app.post('/send', (req, res) => {
     try {
         bot.telegram.sendMessage(channelUsername, messageText, {
-            parse_mode: 'Markdown',
             reply_markup: inlineKeyboard
         });
         res.status(200).send('Message sent successfully');
