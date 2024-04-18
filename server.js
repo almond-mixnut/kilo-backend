@@ -47,7 +47,7 @@ bot.start((ctx) => {
 bot.help((ctx) => ctx.reply('You can use this bot to share files securely. Send /upload to start uploading your files.'));
 
 const channelUsername = '-1002059159519'; // 여기서 채널의 사용자 이름으로 대체하세요.
-const messageText = "Here is a message with some cool options:";
+const messageText = "testsetsetse";
 const inlineKeyboard = Markup.inlineKeyboard([
     Markup.button.url('Visit Website', 'https://example.com'),
     Markup.button.callback('Click Me', 'click_me')
