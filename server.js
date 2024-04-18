@@ -53,9 +53,9 @@ const inlineKeyboard = Markup.inlineKeyboard([
     Markup.button.callback('Click Me', 'click_me')
 ]);
 
-app.post('/send', async (req, res) => {
+app.post('/send', (req, res) => {
     try {
-        await bot.telegram.sendMessage(channelUsername, messageText, {
+        bot.telegram.sendMessage(channelUsername, messageText, {
             parse_mode: 'Markdown',
             reply_markup: inlineKeyboard
         });
