@@ -6,7 +6,7 @@ const multer = require('multer');
 const bodyParser = require('body-parser');
 const { Telegraf, Markup } = require('telegraf');
 const path = require('path');
-
+const axios = require('axios');
 const app = express();
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
@@ -88,6 +88,34 @@ app.post('/upload', upload.single('file'), (req, res) => {
 bot.action('click_me', (ctx) => {
   ctx.answerCbQuery('You clicked the button!');
 });
+
+
+app.post('/sendsend', async (req, res) => {
+  const messageText = req.body.message || "test message";
+  const url = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+  const requestBody = {
+      chat_id: channelUsername,
+      text: messageText,
+      parse_mode: 'Markdown',
+      reply_markup: {
+          inline_keyboard: [
+              [{ text: 'Visit Website', url: 'https://example.com' }],
+              [{ text: 'Click Me', callback_data: 'click_me' }]
+          ]
+      }
+  };
+
+  try {
+      const response = await axios.post(url, requestBody);
+      res.status(200).send('Message sent successfully to the channel');
+  } catch (error) {
+      console.error('Failed to send message:', error);
+      res.status(500).send('Failed to send message');
+  }
+});
+
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.post('/send-message', (req, res) => {
     const { username, message } = req.body;
