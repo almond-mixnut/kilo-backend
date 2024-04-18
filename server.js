@@ -46,6 +46,27 @@ bot.start((ctx) => {
   });
 bot.help((ctx) => ctx.reply('You can use this bot to share files securely. Send /upload to start uploading your files.'));
 
+const channelUsername = '-1002059159519'; // 여기서 채널의 사용자 이름으로 대체하세요.
+const messageText = "Here is a message with some cool options:";
+const inlineKeyboard = Markup.inlineKeyboard([
+    Markup.button.url('Visit Website', 'https://example.com'),
+    Markup.button.callback('Click Me', 'click_me')
+]);
+
+app.post('/send', async (req, res) => {
+    try {
+        await bot.telegram.sendMessage(channelUsername, messageText, {
+            parse_mode: 'Markdown',
+            reply_markup: inlineKeyboard
+        });
+        res.status(200).send('Message sent successfully');
+    } catch (error) {
+        console.error('Failed to send message:', error);
+        res.status(500).send('Failed to send message');
+    }
+});
+
+
 // 추가 명령어
 bot.command('status', (ctx) => {
     // 상태 확인 로직 (예시)
@@ -65,7 +86,9 @@ app.post('/upload', upload.single('file'), (req, res) => {
     }
     res.json({ message: 'File uploaded successfully!', filePath: req.file.path });
 });
-
+bot.action('click_me', (ctx) => {
+  ctx.answerCbQuery('You clicked the button!');
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.post('/send-message', (req, res) => {
     const { username, message } = req.body;
